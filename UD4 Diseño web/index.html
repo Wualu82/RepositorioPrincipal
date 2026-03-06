@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Cursos Online</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+    <h1>Academia Online: Curso básico de diseño web</h1>
+</header>
+
+<main>
+    <section class="curso">
+        <h2>Curso: Todo lo que necesitas saber sobre DISEÑO UX/UI en 6 minutos</h2>
+
+        <!-- Video -->
+        <div class="video-container">
+            <video id="videoCurso" controls preload="metadata">
+                <source src="video-curso-diseño.mp4" type="video/mp4">
+                <source src="video-curso-diseño.webm" type="video/webm">
+                Tu navegador no soporta video.
+            </video>
+        </div>
+
+        <!-- Capítulos -->
+        <div class="capitulos">
+            <button onclick="irAlMinuto(0)">Inicio</button>
+            <button onclick="irAlMinuto(22)">User Flow</button>
+            <button onclick="irAlMinuto(68)">Arquitectura de la informacion</button>
+            <button onclick="irAlMinuto(104)">Wireframes</button>
+            <button onclick="irAlMinuto(165)">Sistemas de diseño</button>
+            <button onclick="irAlMinuto(275)">Principios de diseño</button>
+            <button onclick="irAlMinuto(290)">Consistencia</button>
+            <button onclick="irAlMinuto(340)">Conclusion</button>            
+        </div>
+
+        <!-- Quiz -->
+        <div id="quiz" class="quiz oculto">
+            <h3>Cuestionario</h3>
+            <p>¿Como llamamos una versión de baja fidelidad de la interface?</p>
+            <button onclick="verificarRespuesta('a')">Wireframe</button>
+            <button onclick="verificarRespuesta('b')">UI</button>
+            <button onclick="verificarRespuesta('c')">Sliders</button>
+            <p id="resultado"></p>
+        </div>
+    </section>
+
+    <!-- Audio -->
+    <section class="audio-section">
+        <h2>Conferencia sobre diseño web</h2>
+        <audio controls>
+            <source src="conferencia.mp3" type="audio/mpeg">
+            <source src="conferencia.ogg" type="audio/ogg">
+            Tu navegador no soporta audio.
+        </audio>
+    </section>
+
+    <!-- Comentarios -->
+    <section class="comentarios">
+        <h2>Comentarios</h2>
+        <input type="text" id="comentarioInput" placeholder="Escribe tu comentario">
+        <button onclick="agregarComentario()">Enviar</button>
+        <div id="listaComentarios"></div>
+    </section>
+</main>
+
+<footer>
+    <p>© 2026 Juan Luis García López</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

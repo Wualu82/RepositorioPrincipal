@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Productos</title>
+
+    <!-- Aqui enlazamos la hoja de estilos externa -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <h1>PC componentes - sistema control de stock</h1>
+
+   <!-- SECCIÓN DE BÚSQUEDA
+     Aquí el usuario puede buscar
+     productos por nombre -->
+<section>
+
+    <!-- Campo donde el usuario escribe -->
+    <input type="text" id="searchInput" placeholder="Buscar producto...">
+
+    <!-- Botón que ejecuta el filtrado -->
+    <button onclick="filterProducts()">Buscar</button>
+
+    <!-- Borra el texto del input -->
+    <button onclick="clearSearch()">Limpiar búsqueda</button>
+
+    <!-- Fuerza mostrar todos los productos -->
+    <button onclick="showAllProducts()">Mostrar todo</button>
+
+</section>
+
+
+    <!-- FORMULARIO AGREGAR / EDITAR
+         El mismo formulario sirve para:
+         - Crear producto nuevo
+         - Modificar uno existente-->
+    <section>
+
+        <!-- Campo oculto donde guardamos el ID cuando estamos editando -->
+        <input type="hidden" id="productId">
+
+        <input type="text" id="name" placeholder="Nombre">
+        <input type="number" id="price" placeholder="Precio">
+        <input type="number" id="quantity" placeholder="Cantidad">
+
+        <!-- Este botón detecta automáticamente si es nuevo o edición -->
+        <button onclick="saveProduct()">Guardar Producto</button>
+    </section>
+
+
+    <!-- TABLA DINÁMICA
+         Aquí se mostrarán los productos
+         de forma automática desde JS-->
+    <table id="productTable">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Este espacio lo rellena JavaScript -->
+        </tbody>
+    </table>
+
+    <!-- Enlazamos el archivo JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
