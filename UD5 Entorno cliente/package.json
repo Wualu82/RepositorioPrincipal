@@ -1,0 +1,13 @@
+{
+  "name": "ud5-entorno-cliente",
+  "version": "1.0.0",
+  "description": "Proyecto validación formulario con Jest",
+  "type": "module",
+  "main": "script.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
+}

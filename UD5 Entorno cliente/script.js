@@ -1,12 +1,15 @@
-const regex = {
-  nombre: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/,
-  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  telefono: /^\+34\s\d{3}-\d{3}-\d{3}$/,
-  password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
-};
+import { regex, validarValor } from './validaciones.js';
 
+/**
+ * Valida un campo del formulario (gestiona UI + mensajes)
+ * @param {HTMLInputElement} input
+ * @param {RegExp} pattern
+ * @param {HTMLElement} errorElement
+ * @param {string} mensaje
+ * @returns {boolean}
+ */
 function validarCampo(input, pattern, errorElement, mensaje) {
-  if (!pattern.test(input.value)) {
+  if (!validarValor(input.value, pattern)) {
     errorElement.textContent = mensaje;
     input.classList.add('invalid');
     input.classList.remove('valid');
@@ -19,6 +22,9 @@ function validarCampo(input, pattern, errorElement, mensaje) {
   return true;
 }
 
+/**
+ * Inicializa eventos del formulario
+ */
 document.addEventListener('DOMContentLoaded', () => {
 
   const form = document.getElementById('registroForm');
@@ -27,10 +33,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const telefono = document.getElementById('telefono');
   const password = document.getElementById('password');
 
-  const mensajePassword = 
+  const mensajePassword =
     'Debe tener mínimo 8 caracteres, incluir mayúscula, minúscula, número y carácter especial';
 
-  // Validación en tiempo real
+  // 🔵 Eventos focus y blur (resaltado)
+  [nombre, email, telefono, password].forEach(input => {
+    input.addEventListener('focus', () => {
+      input.style.backgroundColor = '#e6f2ff';
+    });
+
+    input.addEventListener('blur', () => {
+      input.style.backgroundColor = '';
+    });
+  });
+
+  // 🟢 Validación en tiempo real
   nombre.addEventListener('input', () =>
     validarCampo(nombre, regex.nombre, document.getElementById('errorNombre'), 'Nombre inválido (solo letras)')
   );
@@ -47,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     validarCampo(password, regex.password, document.getElementById('errorPassword'), mensajePassword)
   );
 
-  // Envío del formulario
+  // 🔴 Evento submit
   form.addEventListener('submit', (e) => {
     e.preventDefault();
 
@@ -60,4 +77,5 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Registro exitoso ✅');
     }
   });
+
 });
