@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Clientes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Lista de Clientes</h1>
+
+  <!-- FORMULARIO -->
+  <h2>Añadir cliente</h2>
+  <form id="formCliente">
+    <input type="text" id="nombre" placeholder="Nombre" required>
+    <input type="number" id="edad" placeholder="Edad" required>
+
+    <select id="pais">
+      <option value="">Selecciona país</option>
+    </select>
+
+    <button type="submit" class="btn-guardar">Guardar</button>
+  </form>
+
+  <hr>
+
+<h2 id="tituloEditar">Editar cliente</h2>
+
+<form id="formEditar" style="display:none;">
+  <input type="hidden" id="editId">
+
+  <input type="text" id="editNombre" placeholder="Nombre" required>
+  <input type="number" id="editEdad" placeholder="Edad" required>
+
+  <select id="editPais">
+    <option value="">Selecciona país</option>
+  </select>
+
+  <button type="submit" class="btn-guardar">Guardar</button>
+</form>
+
+  <hr>
+
+  <!-- tabla -->
+  <table>
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Edad</th>
+      <th>País</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody id="tablaClientes"></tbody>
+</table>
+
+  <script>
+
+// Función que obtiene los clientes del backend y los muestra en la tabla
+function cargarClientes() {
+  fetch('http://localhost:3000/clientes')
+    .then(res => res.json())
+    .then(data => {
+
+      const tabla = document.getElementById('tablaClientes');
+      tabla.innerHTML = '';
+
+      // Se recorre el array de clientes recibido
+      data.forEach(cliente => {
+        const tr = document.createElement('tr');
+
+        // Se construye cada fila de la tabla
+        tr.innerHTML = `
+          <td>${cliente.nombre}</td>
+          <td>${cliente.edad}</td>
+          <td>${cliente.pais_nombre || 'Sin país'}</td>
+          <td>
+            <button class="btn-editar">Editar</button>
+            <button class="btn-eliminar">Eliminar</button>
+          </td>
+        `;
+
+        // Asociación de eventos a los botones
+        tr.querySelector('.btn-editar').onclick = () => editarCliente(cliente);
+        tr.querySelector('.btn-eliminar').onclick = () => eliminarCliente(cliente.id_cliente);
+
+        tabla.appendChild(tr);
+      });
+    });
+}
+
+// Carga de países para rellenar los desplegables
+function cargarPaises() {
+  fetch('http://localhost:3000/paises')
+    .then(res => res.json())
+    .then(data => {
+
+      const select = document.getElementById('pais');
+      const selectEdit = document.getElementById('editPais');
+
+      select.innerHTML = '<option value="">Selecciona país</option>';
+      selectEdit.innerHTML = '<option value="">Selecciona país</option>';
+
+      // Se añaden dinámicamente las opciones al select
+      data.forEach(pais => {
+        const option1 = document.createElement('option');
+        option1.value = pais.id_pais;
+        option1.textContent = pais.nombre;
+
+        const option2 = option1.cloneNode(true);
+
+        select.appendChild(option1);
+        selectEdit.appendChild(option2);
+      });
+    });
+}
+
+// Envío del formulario para crear un nuevo cliente
+document.getElementById('formCliente').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const nombre = document.getElementById('nombre').value;
+  const edad = document.getElementById('edad').value;
+  const id_pais = document.getElementById('pais').value;
+
+  fetch('http://localhost:3000/clientes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, edad, id_pais })
+  })
+  .then(() => {
+    this.reset();
+    cargarClientes();
+  });
+});
+
+// Eliminación de un cliente mediante petición DELETE
+function eliminarCliente(id) {
+  if (!confirm('¿Seguro que quieres eliminar este cliente?')) return;
+
+  fetch(`http://localhost:3000/clientes/${id}`, {
+    method: 'DELETE'
+  })
+  .then(() => cargarClientes());
+}
+
+// Preparación del formulario de edición con los datos del cliente
+function editarCliente(cliente) {
+  const form = document.getElementById('formEditar');
+  form.style.display = 'block';
+
+  document.getElementById('editId').value = cliente.id_cliente;
+  document.getElementById('editNombre').value = cliente.nombre;
+  document.getElementById('editEdad').value = cliente.edad;
+  document.getElementById('editPais').value = cliente.id_pais || '';
+
+  // Desplazamiento automático al formulario
+  setTimeout(() => {
+    window.scrollTo({
+      top: form.offsetTop - 50,
+      behavior: 'smooth'
+    });
+  }, 100);
+}
+
+// Envío del formulario de edición (actualización de datos)
+document.getElementById('formEditar').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const id = document.getElementById('editId').value;
+  const nombre = document.getElementById('editNombre').value;
+  const edad = document.getElementById('editEdad').value;
+  const id_pais = document.getElementById('editPais').value;
+
+  fetch(`http://localhost:3000/clientes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, edad, id_pais })
+  })
+  .then(() => {
+    this.reset();
+    this.style.display = 'none';
+    cargarClientes();
+  });
+});
+
+// Inicialización de la aplicación
+cargarClientes();
+cargarPaises();
+
+</script>

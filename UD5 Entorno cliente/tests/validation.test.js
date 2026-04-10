@@ -1,8 +1,23 @@
+/**
+ * @file validation.test.js
+ * @description Pruebas unitarias para validar las expresiones regulares
+ * utilizadas en el formulario de registro.
+ * 
+ * Se comprueban distintos casos válidos e inválidos para:
+ * - Nombre
+ * - Email
+ * - Teléfono
+ * - Contraseña
+ */
+
 import { validarValor, regex } from '../validaciones.js';
 
+/**
+ * Conjunto de pruebas para validar los campos del formulario
+ */
 describe('Validaciones de formulario', () => {
 
-  // 🔤 NOMBRE
+  //  NOMBRE
   test('Nombre válido', () => {
     expect(validarValor('Juan Pérez', regex.nombre)).toBe(true);
   });
@@ -15,7 +30,7 @@ describe('Validaciones de formulario', () => {
     expect(validarValor('J', regex.nombre)).toBe(false);
   });
 
-  // 📧 EMAIL
+  //  EMAIL
   test('Email válido', () => {
     expect(validarValor('test@test.com', regex.email)).toBe(true);
   });
@@ -28,7 +43,7 @@ describe('Validaciones de formulario', () => {
     expect(validarValor('testtest.com', regex.email)).toBe(false);
   });
 
-  // 📱 TELÉFONO
+  //  TELÉFONO
   test('Teléfono válido', () => {
     expect(validarValor('+34 600-123-456', regex.telefono)).toBe(true);
   });
@@ -41,7 +56,7 @@ describe('Validaciones de formulario', () => {
     expect(validarValor('+33 600-123-456', regex.telefono)).toBe(false);
   });
 
-  // 🔐 PASSWORD
+  //  PASSWORD
   test('Password válida', () => {
     expect(validarValor('Aa123456!', regex.password)).toBe(true);
   });

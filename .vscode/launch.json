@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "java",
+            "name": "ClinicaBackendApplication",
+            "request": "launch",
+            "mainClass": "com.clinica.backend.ClinicaBackendApplication",
+            "projectName": "clinica-backend"
+        },
+        {
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
