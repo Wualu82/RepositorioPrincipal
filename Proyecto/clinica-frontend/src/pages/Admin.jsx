@@ -1,170 +1,100 @@
-import { useEffect, useState } from "react";
-import {
-  getTodasCitas,
-  cancelarCita,
-  confirmarCita,
-} from "../api/citas";
 import Layout from "../components/Layout";
-import toast from "react-hot-toast";
+import { useEffect, useState } from "react";
+import { getStats } from "../api/citas";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const Admin = () => {
-  const [citas, setCitas] = useState([]);
-  const [filtroEstado, setFiltroEstado] = useState("TODOS");
-  const [busqueda, setBusqueda] = useState(""); // 🔥 NUEVO
-
-  const cargarCitas = async () => {
-    try {
-      const data = await getTodasCitas();
-      setCitas(data);
-    } catch (error) {
-      toast.error("Error cargando citas");
-    }
-  };
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    cargarCitas();
+    cargarStats();
   }, []);
 
-  const handleConfirmar = async (id) => {
+  const cargarStats = async () => {
     try {
-      await confirmarCita(id);
-      toast.success("Cita confirmada");
-      cargarCitas();
+      const data = await getStats();
+      setStats(data);
     } catch (error) {
-      toast.error("Error al confirmar cita");
+      console.error(error);
     }
   };
 
-  const handleCancelar = async (id) => {
-    try {
-      await cancelarCita(id);
-      toast.success("Cita cancelada");
-      cargarCitas();
-    } catch (error) {
-      toast.error("Error al cancelar cita");
-    }
-  };
+  if (!stats) return <p className="p-6">Cargando estadísticas...</p>;
 
-  // 🔥 FILTRO + BUSCADOR
-  const citasFiltradas = citas.filter((cita) => {
-    const coincideEstado =
-      filtroEstado === "TODOS" || cita.estado === filtroEstado;
-
-    const texto = busqueda.toLowerCase();
-
-    const coincideBusqueda =
-      cita.paciente?.nombre?.toLowerCase().includes(texto) ||
-      cita.paciente?.apellido?.toLowerCase().includes(texto) ||
-      cita.medico?.nombre?.toLowerCase().includes(texto) ||
-      cita.medico?.apellido?.toLowerCase().includes(texto) ||
-      cita.medico?.especialidad?.nombre?.toLowerCase().includes(texto);
-
-    return coincideEstado && coincideBusqueda;
-  });
+  const chartData = [
+    { name: "Confirmadas", value: stats.confirmadas },
+    { name: "Canceladas", value: stats.canceladas },
+  ];
 
   return (
     <Layout>
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
-        <h1 className="text-2xl font-bold mb-4">
-          👑 Panel Admin - Citas
+        <h1 className="text-2xl font-bold mb-6">
+          📊 Panel de Administración
         </h1>
 
-        {/* 🔎 BUSCADOR */}
-        <input
-          type="text"
-          placeholder="Buscar por paciente, médico o especialidad..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="w-full mb-4 border p-2 rounded"
-        />
+        {/* 🔥 CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
 
-        {/* FILTRO */}
-        <div className="mb-6">
-          <select
-            value={filtroEstado}
-            onChange={(e) => setFiltroEstado(e.target.value)}
-            className="border p-2 rounded"
-          >
-            <option value="TODOS">Todos</option>
-            <option value="PENDIENTE">Pendientes</option>
-            <option value="CONFIRMADA">Confirmadas</option>
-            <option value="CANCELADA">Canceladas</option>
-          </select>
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+            <p className="text-gray-500">Total citas</p>
+            <h2 className="text-2xl font-bold">{stats.total}</h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+            <p className="text-gray-500">Citas hoy</p>
+            <h2 className="text-2xl font-bold">{stats.hoy}</h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+            <p className="text-gray-500">Confirmadas</p>
+            <h2 className="text-2xl font-bold text-green-600">
+              {stats.confirmadas}
+            </h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow text-center">
+            <p className="text-gray-500">Canceladas</p>
+            <h2 className="text-2xl font-bold text-red-600">
+              {stats.canceladas}
+            </h2>
+          </div>
+
         </div>
 
-        <div className="space-y-4">
+        {/* 🔥 GRÁFICA */}
+        <div className="bg-white p-6 rounded-xl shadow">
 
-          {citasFiltradas.length === 0 ? (
-            <p className="text-gray-500">No hay resultados</p>
-          ) : (
-            citasFiltradas.map((cita) => (
-              <div
-                key={cita.id}
-                className="bg-white p-5 rounded-xl shadow flex justify-between items-center"
-              >
+          <h2 className="text-lg font-semibold mb-4">
+            Distribución de citas
+          </h2>
 
-                <div>
+          <div className="h-64">
 
-                  <p className="font-semibold">
-                    {cita.medico?.especialidad?.nombre} — {cita.medico?.nombre} {cita.medico?.apellido}
-                  </p>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  outerRadius={100}
+                  label
+                >
+                  <Cell fill="#16a34a" />
+                  <Cell fill="#dc2626" />
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
 
-                  <p className="text-sm text-gray-500">
-                    Paciente: {cita.paciente?.nombre} {cita.paciente?.apellido}
-                  </p>
-
-                  <p className="text-sm text-gray-500">
-                    {new Date(cita.fecha).toLocaleDateString()} ·{" "}
-                    {new Date(cita.fecha).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-
-                  <p className="text-sm">
-                    Estado:{" "}
-                    <span
-                      className={
-                        cita.estado === "CONFIRMADA"
-                          ? "text-green-600"
-                          : cita.estado === "CANCELADA"
-                          ? "text-red-500"
-                          : "text-yellow-500"
-                      }
-                    >
-                      {cita.estado}
-                    </span>
-                  </p>
-
-                </div>
-
-                <div className="flex gap-2">
-
-                  {cita.estado === "PENDIENTE" && (
-                    <button
-                      onClick={() => handleConfirmar(cita.id)}
-                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                    >
-                      Confirmar
-                    </button>
-                  )}
-
-                  {cita.estado !== "CANCELADA" && (
-                    <button
-                      onClick={() => handleCancelar(cita.id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                    >
-                      Cancelar
-                    </button>
-                  )}
-
-                </div>
-
-              </div>
-            ))
-          )}
+          </div>
 
         </div>
 

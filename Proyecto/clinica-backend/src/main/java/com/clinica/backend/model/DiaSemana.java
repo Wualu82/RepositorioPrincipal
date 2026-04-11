@@ -1,5 +1,4 @@
 package com.clinica.backend.model;
-
 public enum DiaSemana {
     MONDAY,
     TUESDAY,

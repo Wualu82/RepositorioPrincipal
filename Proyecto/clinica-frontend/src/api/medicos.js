@@ -1,11 +1,5 @@
-const API_URL = "http://localhost:8080";
+import { fetchWithAuth } from "./apiClient";
 
 export const getMedicos = async () => {
-  const response = await fetch(`${API_URL}/medicos`);
-
-  if (!response.ok) {
-    throw new Error("Error al obtener médicos");
-  }
-
-  return response.json();
+  return await fetchWithAuth("/medicos");
 };

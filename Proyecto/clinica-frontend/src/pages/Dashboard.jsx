@@ -1,8 +1,14 @@
 import Layout from "../components/Layout";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+
+  // 🔥 TÍTULO DE LA PESTAÑA
+  useEffect(() => {
+    document.title = "Dashboard | Clínica Vitalia";
+  }, []);
 
   return (
     <Layout>

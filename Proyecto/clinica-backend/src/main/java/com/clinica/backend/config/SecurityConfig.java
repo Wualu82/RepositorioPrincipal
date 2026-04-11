@@ -1,12 +1,15 @@
 package com.clinica.backend.config;
 
+import com.clinica.backend.service.CustomUserDetailsService;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
@@ -22,58 +25,90 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtFilter jwtFilter) {
+    public SecurityConfig(JwtFilter jwtFilter, CustomUserDetailsService userDetailsService) {
         this.jwtFilter = jwtFilter;
+        this.userDetailsService = userDetailsService;
     }
 
+    // 🔐 PASSWORD ENCODER
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // 🔐 AUTH PROVIDER
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    // 🔐 AUTH MANAGER
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+    // 🔐 SECURITY CONFIG
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // 🔥 AÑADIR ESTO (CLAVE PARA CORS)
-                .cors(cors -> {})
+            .cors(cors -> {}) // usa tu CorsConfig.java
+            .csrf(csrf -> csrf.disable())
 
-                .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+    // 🔓 AUTH
+    .requestMatchers("/auth/**").permitAll()
 
-                        .requestMatchers("/medicos/**").permitAll()
+    // 🔥 MUY IMPORTANTE → PRIMERO LAS ESPECÍFICAS
 
-                        // 👤 PACIENTE
-                        .requestMatchers("/citas/mis-citas").hasRole("PACIENTE")
-                        .requestMatchers(HttpMethod.POST, "/citas").hasRole("PACIENTE")
+    // 🕒 HORAS DISPONIBLES
+    .requestMatchers(HttpMethod.GET, "/citas/disponibles")
+    .hasAnyRole("PACIENTE", "ADMIN")
 
-                        // 👑 ADMIN
-                        .requestMatchers(HttpMethod.GET, "/citas").hasRole("ADMIN")
+    // 👤 MIS CITAS
+    .requestMatchers("/citas/mis-citas")
+    .hasAnyRole("PACIENTE", "ADMIN")
 
-                        // 🔥 CANCELAR
-                        .requestMatchers(HttpMethod.PUT, "/citas/cancelar/**")
-                        .hasAnyRole("PACIENTE", "ADMIN")
+    // ➕ CREAR
+    .requestMatchers(HttpMethod.POST, "/citas")
+    .hasRole("PACIENTE")
 
-                        // 🔥 CONFIRMAR
-                        .requestMatchers(HttpMethod.PUT, "/citas/confirmar/**")
-                        .hasRole("ADMIN")
+    // 👨‍⚕️ MÉDICOS
+    .requestMatchers(HttpMethod.GET, "/medicos/**")
+    .hasAnyRole("PACIENTE", "ADMIN")
 
-                        .anyRequest().authenticated()
-                )
+    // 👑 ADMIN (GENÉRICO AL FINAL)
+    .requestMatchers(HttpMethod.GET, "/citas")
+    .hasRole("ADMIN")
 
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+    .requestMatchers("/citas/stats")
+    .hasRole("ADMIN")
 
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+    // ❌ CANCELAR
+    .requestMatchers(HttpMethod.PUT, "/citas/cancelar/**")
+    .hasAnyRole("PACIENTE", "ADMIN")
+
+    // ✅ CONFIRMAR
+    .requestMatchers(HttpMethod.PUT, "/citas/confirmar/**")
+    .hasRole("ADMIN")
+
+    .anyRequest().authenticated()
+)
+
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+
+            .authenticationProvider(authenticationProvider())
+
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

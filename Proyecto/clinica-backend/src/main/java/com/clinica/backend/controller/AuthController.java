@@ -39,27 +39,36 @@ public class AuthController {
 
     // ================= LOGIN =================
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody Map<String, String> request) {
+public Map<String, String> login(@RequestBody Map<String, String> request) {
 
-        String email = request.get("email");
-        String password = request.get("password");
+    String email = request.get("email");
+    String password = request.get("password");
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-        );
+    // 🔍 DEBUG
+    System.out.println("🔥 LOGIN INTENTO: " + email);
+    System.out.println("🔥 PASSWORD INPUT: " + password);
 
-        // 🔥 BUSCAR USUARIO PARA OBTENER ROL
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    // 🔐 AUTENTICACIÓN
+    authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(email, password)
+    );
 
-        String token = jwtUtil.generateToken(email);
+    System.out.println("✅ LOGIN OK");
 
-        Map<String, String> response = new HashMap<>();
-        response.put("token", token);
-        response.put("rol", usuario.getRol()); // 🔥 CLAVE
+    // 🔎 BUSCAR USUARIO
+    Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        return response;
-    }
+    // 🔑 GENERAR TOKEN
+    String token = jwtUtil.generateToken(email);
+
+    // 📦 RESPUESTA
+    Map<String, String> response = new HashMap<>();
+    response.put("token", token);
+    response.put("rol", usuario.getRol());
+
+    return response;
+}
 
     // ================= REGISTER =================
     @PostMapping("/register")

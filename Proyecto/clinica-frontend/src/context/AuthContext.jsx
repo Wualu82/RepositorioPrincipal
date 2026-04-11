@@ -1,17 +1,27 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("token"));
 
-  const loginUser = (token) => {
-    localStorage.setItem("token", token);
-    setToken(token);
+  const [token, setToken] = useState(null);
+
+  // 🔥 CARGAR TOKEN AL INICIAR
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
+      setToken(storedToken);
+    }
+  }, []);
+
+  const loginUser = (jwt) => {
+    localStorage.setItem("token", jwt);
+    setToken(jwt);
   };
 
   const logoutUser = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("rol");
     setToken(null);
   };
 

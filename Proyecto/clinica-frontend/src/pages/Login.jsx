@@ -2,7 +2,8 @@ import { useState } from "react";
 import { login } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast"; // 🔥 IMPORTANTE
+import toast from "react-hot-toast";
+import PublicLayout from "../components/PublicLayout";
 
 const Login = () => {
   const { loginUser } = useAuth();
@@ -17,65 +18,73 @@ const Login = () => {
     try {
       const data = await login(email, password);
 
-      // 🔐 Guardar token
+      // 🔐 Guardar token en contexto + localStorage
       loginUser(data.token);
 
       // 🔥 Guardar rol
-      localStorage.setItem("rol", data.rol);
+      if (data.rol) {
+        localStorage.setItem("rol", data.rol);
+      }
 
-      // 🔥 TOAST DE ÉXITO
+      // 🔥 TOAST
       toast.success("Login correcto");
 
-      // 🔥 IMPORTANTE → delay para que se vea el toast
+      // 🔥 Redirección con pequeño delay
       setTimeout(() => {
         navigate("/dashboard");
-      }, 1000);
+      }, 800);
 
     } catch (error) {
       console.error(error);
-
-      // 🔥 TOAST DE ERROR (reemplaza alert)
       toast.error("Credenciales incorrectas");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <PublicLayout>
 
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+      <div className="flex items-center justify-center py-10">
 
-        <h2 className="text-2xl font-bold text-center mb-6">
-          🏥 Clínica - Login
-        </h2>
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <h2 className="text-2xl font-bold text-center mb-6">
+            🩺 Clínica Vitalia - Login
+          </h2>
 
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <form onSubmit={handleSubmit} className="space-y-4">
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <input
+              type="email"
+              placeholder="Email"
+              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Entrar
-          </button>
+            <input
+              type="password"
+              placeholder="Password"
+              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-        </form>
+            <button
+              type="submit"
+              className="w-full bg-primary text-white py-2 rounded-lg hover:bg-secondary transition"
+            >
+              Entrar
+            </button>
+
+          </form>
+
+        </div>
 
       </div>
 
-    </div>
+    </PublicLayout>
   );
 };
 

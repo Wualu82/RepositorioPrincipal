@@ -7,6 +7,11 @@ import PrivateRoute from "./routes/PrivateRoute";
 import Admin from "./pages/Admin";
 import Calendario from "./pages/Calendario";
 import Home from "./pages/Home";
+import Servicios from "./pages/Servicios";
+import Equipo from "./pages/Equipo";
+import MedicoDetalle from "./pages/MedicoDetalle";
+import Clinica from "./pages/Clinica";
+import Trabaja from "./pages/Trabaja";
 
 const App = () => {
   return (
@@ -59,6 +64,26 @@ const App = () => {
           <Home />
           } 
         />
+
+        <Route 
+          path="/servicios" 
+          element={<
+          Servicios />
+          } 
+        />  
+
+        <Route 
+          path="/equipo" 
+          element={
+          <Equipo />
+          } 
+        />
+
+        <Route path="/equipo/:id" element={<MedicoDetalle />} />
+
+        <Route path="/clinica" element={<Clinica />} />
+
+        <Route path="/trabaja" element={<Trabaja />} />
 
       </Routes>
     </BrowserRouter>

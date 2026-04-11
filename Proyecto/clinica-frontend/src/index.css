@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 🔥 ESTILO GLOBAL */
+body {
+  @apply bg-background text-textMain;
+}
+
+/* 🔥 BOTONES SUAVES */
+button {
+  @apply transition duration-200;
+}

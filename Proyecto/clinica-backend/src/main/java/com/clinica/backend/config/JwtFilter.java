@@ -28,8 +28,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+                                   HttpServletResponse response,
+                                   FilterChain filterChain)
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
@@ -37,39 +37,50 @@ public class JwtFilter extends OncePerRequestFilter {
         String username = null;
         String token = null;
 
-        // 🔥 SI NO HAY TOKEN → CONTINUAR SIN AUTENTICAR
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 👉 Extraer token y usuario
-        token = authHeader.substring(7);
-        username = jwtUtil.extractUsername(token);
-
+        // 🔥 DEBUG TOTAL
+        System.out.println("➡️ REQUEST: " + request.getMethod() + " " + request.getRequestURI());
         System.out.println("🔐 HEADER: " + authHeader);
-        System.out.println("👤 USERNAME: " + username);
 
-        // 👉 Si hay usuario y no está autenticado
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        // 🔥 SOLO si hay token
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            token = authHeader.substring(7);
 
-            if (jwtUtil.validateToken(token, username)) {
-
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            try {
+                username = jwtUtil.extractUsername(token);
+                System.out.println("👤 USERNAME EXTRAÍDO: " + username);
+            } catch (Exception e) {
+                System.out.println("❌ Error extrayendo username del token");
             }
+
+            // 🔥 AUTENTICAR USUARIO
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                if (jwtUtil.validateToken(token, username)) {
+
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    System.out.println("✅ AUTENTICADO: " + username);
+                } else {
+                    System.out.println("❌ TOKEN INVÁLIDO");
+                }
+            }
+
+        } else {
+            System.out.println("⚠️ NO TOKEN EN ESTA REQUEST");
         }
 
         filterChain.doFilter(request, response);

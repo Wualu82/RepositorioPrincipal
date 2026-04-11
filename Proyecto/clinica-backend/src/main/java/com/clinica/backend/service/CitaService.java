@@ -7,7 +7,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ public class CitaService {
         return citaRepository.findAll();
     }
 
-    // 👤 MIS CITAS
+    // 👤 MIS CITAS (FIX ADMIN)
     public List<Cita> obtenerCitasDelUsuarioLogueado() {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -47,13 +46,19 @@ public class CitaService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        // 🔥 ADMIN VE TODAS
+        if (usuario.getRol().equals("ADMIN")) {
+            return citaRepository.findAll();
+        }
+
+        // 👤 PACIENTE VE SOLO LAS SUYAS
         Paciente paciente = pacienteRepository.findByUsuario(usuario)
                 .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
 
         return citaRepository.findByPaciente_Id(paciente.getId());
     }
 
-    // 👤 CREAR CITA (🔥 CORREGIDO)
+    // 👤 CREAR CITA
     public Cita crearCitaParaUsuarioLogueado(Cita cita) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -66,25 +71,23 @@ public class CitaService {
 
         cita.setPaciente(paciente);
 
-// 🔥 BLOQUEAR FECHAS PASADAS
-if (cita.getFecha().isBefore(LocalDateTime.now())) {
-    throw new RuntimeException("No puedes crear citas en el pasado");
-}
+        // ❌ FECHAS PASADAS
+        if (cita.getFecha().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("No puedes crear citas en el pasado");
+        }
 
-// 🔥 VALIDAR MÉDICO
-if (cita.getMedico() == null || cita.getMedico().getId() == null) {
-    throw new RuntimeException("Debe proporcionar un medicoId válido");
-}
+        // ❌ MÉDICO
+        if (cita.getMedico() == null || cita.getMedico().getId() == null) {
+            throw new RuntimeException("Debe proporcionar un medicoId válido");
+        }
 
-        // 🔥 BUSCAR MÉDICO EN BD
         Medico medico = medicoRepository.findById(cita.getMedico().getId())
                 .orElseThrow(() -> new RuntimeException("Médico no encontrado"));
 
         cita.setMedico(medico);
 
-        // VALIDACIONES
-        DayOfWeek diaSemana = cita.getFecha().getDayOfWeek();
-        DiaSemana diaEnum = DiaSemana.valueOf(diaSemana.name());
+        // 🔥 DÍA CORRECTO (EN INGLÉS → COINCIDE CON BD)
+        DiaSemana diaEnum = DiaSemana.valueOf(cita.getFecha().getDayOfWeek().name());
 
         List<HorarioMedico> horarios = horarioMedicoRepository
                 .findByMedico_IdAndDiaSemana(medico.getId(), diaEnum);
@@ -113,6 +116,43 @@ if (cita.getMedico() == null || cita.getMedico().getId() == null) {
         cita.setEstado(EstadoCita.PENDIENTE);
 
         return citaRepository.save(cita);
+    }
+
+    // 🔥 HORAS DISPONIBLES
+    public List<LocalTime> obtenerHorasDisponibles(Long medicoId, String fechaStr) {
+
+        LocalDate fecha = LocalDate.parse(fechaStr);
+
+        // 🔥 CLAVE → MISMO FORMATO QUE BD (MONDAY, etc)
+        DiaSemana diaEnum = DiaSemana.valueOf(fecha.getDayOfWeek().name());
+
+        List<HorarioMedico> horarios = horarioMedicoRepository
+                .findByMedico_IdAndDiaSemana(medicoId, diaEnum);
+
+        if (horarios.isEmpty()) {
+            return List.of();
+        }
+
+        List<LocalTime> disponibles = new ArrayList<>();
+
+        for (HorarioMedico horario : horarios) {
+
+            LocalTime hora = horario.getHoraInicio();
+
+            while (hora.isBefore(horario.getHoraFin())) {
+
+                boolean ocupada = citaRepository
+                        .existsByMedico_IdAndFecha(medicoId, LocalDateTime.of(fecha, hora));
+
+                if (!ocupada) {
+                    disponibles.add(hora);
+                }
+
+                hora = hora.plusMinutes(30);
+            }
+        }
+
+        return disponibles;
     }
 
     // 🔥 CANCELAR
@@ -149,7 +189,7 @@ if (cita.getMedico() == null || cita.getMedico().getId() == null) {
         return citaRepository.save(cita);
     }
 
-    // 🔥 CONFIRMAR (ADMIN)
+    // 🔥 CONFIRMAR
     public Cita confirmarCita(Long citaId) {
 
         Cita cita = citaRepository.findById(citaId)
@@ -167,39 +207,4 @@ if (cita.getMedico() == null || cita.getMedico().getId() == null) {
 
         return citaRepository.save(cita);
     }
-
-    public List<LocalTime> obtenerHorasDisponibles(Long medicoId, String fechaStr) {
-
-    LocalDate fecha = LocalDate.parse(fechaStr);
-    DayOfWeek diaSemana = fecha.getDayOfWeek();
-    DiaSemana diaEnum = DiaSemana.valueOf(diaSemana.name());
-
-    List<HorarioMedico> horarios = horarioMedicoRepository
-            .findByMedico_IdAndDiaSemana(medicoId, diaEnum);
-
-    if (horarios.isEmpty()) {
-        return List.of();
-    }
-
-    List<LocalTime> disponibles = new ArrayList<>();
-
-    for (HorarioMedico horario : horarios) {
-
-        LocalTime hora = horario.getHoraInicio();
-
-        while (hora.isBefore(horario.getHoraFin())) {
-
-            boolean ocupada = citaRepository
-                    .existsByMedico_IdAndFecha(medicoId, LocalDateTime.of(fecha, hora));
-
-            if (!ocupada) {
-                disponibles.add(hora);
-            }
-
-            hora = hora.plusMinutes(30); // intervalos
-        }
-    }
-
-    return disponibles;
-}
 }
