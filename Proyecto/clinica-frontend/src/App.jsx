@@ -1,11 +1,17 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Login from "./pages/Login";
+import Register from "./pages/Register";
+
 import Dashboard from "./pages/Dashboard";
 import Citas from "./pages/Citas";
 import NuevaCita from "./pages/NuevaCita";
+import HistorialCitas from "./pages/HistorialCitas"; // 🔥 NUEVO
+
 import PrivateRoute from "./routes/PrivateRoute";
 import Admin from "./pages/Admin";
 import Calendario from "./pages/Calendario";
+
 import Home from "./pages/Home";
 import Servicios from "./pages/Servicios";
 import Equipo from "./pages/Equipo";
@@ -17,8 +23,12 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
 
+        {/* 🔐 AUTH */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* 🔒 PRIVADAS */}
         <Route
           path="/dashboard"
           element={
@@ -45,44 +55,35 @@ const App = () => {
             </PrivateRoute>
           }
         />
+
+        {/* 🔥 HISTORIAL */}
         <Route
-          path="/admin" 
+          path="/citas/historial"
           element={
-            <Admin />
-          } 
+            <PrivateRoute>
+              <HistorialCitas />
+            </PrivateRoute>
+          }
         />
 
-        <Route 
-          path="/calendario"
-          element={
-          <Calendario />
-          } 
-        />      
+        {/* 👨‍⚕️ ADMIN */}
+        <Route path="/admin" element={<Admin />} />
 
-        <Route 
-          path="/" element={
-          <Home />
-          } 
-        />
+        {/* 📅 CALENDARIO */}
+        <Route path="/calendario" element={<Calendario />} />
+
+        {/* 🌐 PÚBLICAS */}
+        <Route path="/" element={<Home />} />
 
         <Route 
           path="/servicios" 
-          element={<
-          Servicios />
-          } 
-        />  
-
-        <Route 
-          path="/equipo" 
-          element={
-          <Equipo />
-          } 
+          element={<Servicios />}
         />
 
+        <Route path="/equipo" element={<Equipo />} />
         <Route path="/equipo/:id" element={<MedicoDetalle />} />
 
         <Route path="/clinica" element={<Clinica />} />
-
         <Route path="/trabaja" element={<Trabaja />} />
 
       </Routes>

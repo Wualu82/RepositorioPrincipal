@@ -1,31 +1,51 @@
 import Layout from "../components/Layout";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getStats } from "../api/citas";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState(null);
 
-  // 🔥 TÍTULO DE LA PESTAÑA
+  // 🔥 TÍTULO
   useEffect(() => {
     document.title = "Dashboard | Clínica Vitalia";
+    cargarStats();
   }, []);
+
+  const cargarStats = async () => {
+    try {
+      const data = await getStats();
+      setStats(data);
+    } catch (error) {
+      console.error("Error cargando stats:", error);
+    }
+  };
 
   return (
     <Layout>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
 
         <h1 className="text-2xl font-bold mb-6">
-          🏥 Dashboard
+          🏥 Área personal
         </h1>
 
         <p className="mb-6 text-gray-600">
-          Bienvenido a la clínica
+          Bienvenido a Clínica Vitalia
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 🔥 ACCESOS RÁPIDOS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
 
-          {/* MIS CITAS */}
           <div
             onClick={() => navigate("/citas")}
             className="bg-white p-6 rounded-xl shadow hover:shadow-lg cursor-pointer transition"
@@ -36,7 +56,6 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* NUEVA CITA */}
           <div
             onClick={() => navigate("/citas/nueva")}
             className="bg-white p-6 rounded-xl shadow hover:shadow-lg cursor-pointer transition"
@@ -47,7 +66,6 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* 🔥 CALENDARIO */}
           <div
             onClick={() => navigate("/calendario")}
             className="bg-white p-6 rounded-xl shadow hover:shadow-lg cursor-pointer transition"
@@ -59,6 +77,61 @@ const Dashboard = () => {
           </div>
 
         </div>
+
+        {/* 🔥 SOLO SI HAY STATS */}
+        {stats && (
+          <>
+            {/* TARJETAS */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+
+              <div className="bg-white p-4 rounded-xl shadow text-center">
+                <p className="text-gray-500">Total</p>
+                <h2 className="text-xl font-bold">{stats.total}</h2>
+              </div>
+
+              <div className="bg-green-100 p-4 rounded-xl text-center">
+                <p>Confirmadas</p>
+                <h2 className="font-bold">{stats.confirmadas}</h2>
+              </div>
+
+              <div className="bg-red-100 p-4 rounded-xl text-center">
+                <p>Canceladas</p>
+                <h2 className="font-bold">{stats.canceladas}</h2>
+              </div>
+
+              <div className="bg-blue-100 p-4 rounded-xl text-center">
+                <p>Hoy</p>
+                <h2 className="font-bold">{stats.hoy}</h2>
+              </div>
+
+            </div>
+
+            {/* GRÁFICO */}
+            <div className="bg-white p-6 rounded-xl shadow">
+
+              <h2 className="mb-4 font-semibold">
+                📈 Estadísticas de citas
+              </h2>
+
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={[
+                    { name: "Total", value: stats.total },
+                    { name: "Confirmadas", value: stats.confirmadas },
+                    { name: "Canceladas", value: stats.canceladas },
+                    { name: "Hoy", value: stats.hoy },
+                  ]}
+                >
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" />
+                </BarChart>
+              </ResponsiveContainer>
+
+            </div>
+          </>
+        )}
 
       </div>
 

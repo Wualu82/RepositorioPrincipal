@@ -22,4 +22,11 @@ public class MedicoController {
     public List<Medico> obtenerTodos() {
         return medicoRepository.findAll();
     }
+
+    // 🔥 AÑADIR ESTO
+    @GetMapping("/{id}")
+    public Medico obtenerPorId(@PathVariable Long id) {
+        return medicoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Medico no encontrado"));
+    }
 }

@@ -58,49 +58,50 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(cors -> {}) // usa tu CorsConfig.java
+            .cors(cors -> {}) 
             .csrf(csrf -> csrf.disable())
 
             .authorizeHttpRequests(auth -> auth
 
-    // 🔓 AUTH
-    .requestMatchers("/auth/**").permitAll()
+                // 🔓 AUTH
+                .requestMatchers("/auth/**").permitAll()
 
-    // 🔥 MUY IMPORTANTE → PRIMERO LAS ESPECÍFICAS
+                // 👨‍⚕️ MÉDICOS (PÚBLICO)
+                .requestMatchers("/medicos/**").permitAll()
 
-    // 🕒 HORAS DISPONIBLES
-    .requestMatchers(HttpMethod.GET, "/citas/disponibles")
-    .hasAnyRole("PACIENTE", "ADMIN")
+                // 👤 PACIENTES (PARA ADMIN → NUEVA CITA)
+                .requestMatchers("/pacientes/**").hasRole("ADMIN")
 
-    // 👤 MIS CITAS
-    .requestMatchers("/citas/mis-citas")
-    .hasAnyRole("PACIENTE", "ADMIN")
+                // 🕒 HORAS DISPONIBLES
+                .requestMatchers(HttpMethod.GET, "/citas/disponibles")
+                .hasAnyRole("PACIENTE", "ADMIN")
 
-    // ➕ CREAR
-    .requestMatchers(HttpMethod.POST, "/citas")
-    .hasRole("PACIENTE")
+                // 👤 MIS CITAS
+                .requestMatchers("/citas/mis-citas")
+                .hasAnyRole("PACIENTE", "ADMIN")
 
-    // 👨‍⚕️ MÉDICOS
-    .requestMatchers(HttpMethod.GET, "/medicos/**")
-    .hasAnyRole("PACIENTE", "ADMIN")
+                // ➕ CREAR CITA (PACIENTE)(y admin ahora con modificacion donde admin tambien crea citas para otros)
+                .requestMatchers(HttpMethod.POST, "/citas")
+                .hasAnyRole("PACIENTE", "ADMIN")
 
-    // 👑 ADMIN (GENÉRICO AL FINAL)
-    .requestMatchers(HttpMethod.GET, "/citas")
-    .hasRole("ADMIN")
+                // 👑 ADMIN → VER TODAS
+                .requestMatchers(HttpMethod.GET, "/citas")
+                .hasRole("ADMIN")
 
-    .requestMatchers("/citas/stats")
-    .hasRole("ADMIN")
+                // 📊 STATS
+                .requestMatchers("/citas/stats")
+                .hasRole("ADMIN")
 
-    // ❌ CANCELAR
-    .requestMatchers(HttpMethod.PUT, "/citas/cancelar/**")
-    .hasAnyRole("PACIENTE", "ADMIN")
+                // ❌ CANCELAR
+                .requestMatchers(HttpMethod.PUT, "/citas/cancelar/**")
+                .hasAnyRole("PACIENTE", "ADMIN")
 
-    // ✅ CONFIRMAR
-    .requestMatchers(HttpMethod.PUT, "/citas/confirmar/**")
-    .hasRole("ADMIN")
+                // ✅ CONFIRMAR
+                .requestMatchers(HttpMethod.PUT, "/citas/confirmar/**")
+                .hasRole("ADMIN")
 
-    .anyRequest().authenticated()
-)
+                .anyRequest().authenticated()
+            )
 
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

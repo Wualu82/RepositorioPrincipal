@@ -25,9 +25,11 @@ export const register = async (userData) => {
     body: JSON.stringify(userData)
   });
 
+  const data = await response.json(); // 🔥 IMPORTANTE
+
   if (!response.ok) {
-    throw new Error("Error en registro");
+    throw data; // 🔥 AQUÍ ESTÁ LA MAGIA
   }
 
-  return response.json();
+  return data;
 };

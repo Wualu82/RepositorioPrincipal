@@ -6,10 +6,18 @@ import java.time.LocalDate;
 public class RegisterRequest {
 
     @Email(message = "Email no válido")
+    @Pattern(
+    regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+    message = "El email debe tener un formato correcto"
+    )
     @NotBlank(message = "El email es obligatorio")
     private String email;
 
     @NotBlank(message = "La contraseña es obligatoria")
+    @Pattern(
+    regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+    message = "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo"
+    )
     private String password;
 
     @NotBlank(message = "El nombre es obligatorio")
@@ -22,6 +30,11 @@ public class RegisterRequest {
              message = "El apellido solo puede contener letras")
     private String apellido;
 
+    @Pattern(
+    regexp = "^[6789]\\d{8}$",
+    message = "Teléfono no válido (9 dígitos, empieza por 6,7,8 o 9)"
+    )
+    @NotBlank(message = "El teléfono es obligatorio")
     private String telefono;
 
     @NotNull(message = "La fecha de nacimiento es obligatoria")

@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
+import Footer from "../components/Footer"; // 🔥 AÑADIDO
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
-  const { logoutUser } = useAuth();
+  const { logoutUser, usuario, token } = useAuth();
   const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
@@ -18,7 +19,7 @@ const Layout = ({ children }) => {
       {/* 🔝 NAVBAR */}
       <nav className="bg-white shadow px-6 py-4 flex justify-between items-center">
 
-        {/* LOGO → SIEMPRE HOME */}
+        {/* LOGO */}
         <h1
           className="font-bold text-xl text-primary cursor-pointer"
           onClick={() => navigate("/")}
@@ -43,16 +44,34 @@ const Layout = ({ children }) => {
           <Link to="/clinica">La clínica</Link>
           <Link to="/trabaja">Trabaja</Link>
 
-          <button onClick={() => navigate("/dashboard")}>
-            Dashboard
-          </button>
+          {/* 🔥 USUARIO */}
+          {token ? (
+            <>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700 transition"
+              >
+                <div className="w-8 h-8 flex items-center justify-center bg-white text-blue-600 rounded-full font-bold">
+                  {usuario?.nombre?.[0]}{usuario?.apellido?.[0]}
+                </div>
 
-          <button
-            onClick={handleLogout}
-            className="bg-accent text-white px-4 py-2 rounded-lg"
-          >
-            Cerrar sesión
-          </button>
+                <span>
+                  {usuario?.nombre}
+                </span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="bg-accent text-white px-4 py-2 rounded-lg"
+              >
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <button onClick={() => navigate("/login")}>
+              Login
+            </button>
+          )}
 
         </div>
       </nav>
@@ -67,13 +86,24 @@ const Layout = ({ children }) => {
           <Link to="/clinica" onClick={() => setOpen(false)}>La clínica</Link>
           <Link to="/trabaja" onClick={() => setOpen(false)}>Trabaja</Link>
 
-          <button onClick={() => navigate("/dashboard")}>
-            Dashboard
-          </button>
+          {token ? (
+            <>
+              <button onClick={() => {
+                navigate("/dashboard");
+                setOpen(false);
+              }}>
+                Área personal
+              </button>
 
-          <button onClick={handleLogout}>
-            Cerrar sesión
-          </button>
+              <button onClick={handleLogout}>
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <button onClick={() => navigate("/login")}>
+              Login
+            </button>
+          )}
 
         </div>
       )}
@@ -82,6 +112,9 @@ const Layout = ({ children }) => {
       <main className="flex-1 p-4 md:p-6">
         {children}
       </main>
+
+      {/* 🔻 FOOTER */}
+      <Footer />
 
     </div>
   );

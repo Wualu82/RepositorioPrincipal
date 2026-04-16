@@ -1,29 +1,46 @@
 import { useState, useEffect } from "react";
 import { crearCita, getHorasDisponibles } from "../api/citas";
 import { getMedicos } from "../api/medicos";
+import { getPacientes } from "../api/pacientes";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import toast from "react-hot-toast"; // 🔥 AÑADIDO
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 const NuevaCita = () => {
   const [medicoId, setMedicoId] = useState("");
+  const [pacienteId, setPacienteId] = useState("");
   const [fecha, setFecha] = useState("");
   const [horas, setHoras] = useState([]);
   const [horaSeleccionada, setHoraSeleccionada] = useState("");
 
   const [medicos, setMedicos] = useState([]);
+  const [pacientes, setPacientes] = useState([]);
 
+  const { usuario } = useAuth();
   const navigate = useNavigate();
 
+  // 🔥 CARGAR DATOS
   useEffect(() => {
-    const fetchMedicos = async () => {
-      const data = await getMedicos();
-      setMedicos(data);
-    };
-    fetchMedicos();
-  }, []);
+    const fetchData = async () => {
+      try {
+        const medicosData = await getMedicos();
+        setMedicos(medicosData);
 
-  // 🔥 cargar horas cuando cambian médico o fecha
+        if (usuario?.rol === "ADMIN") {
+          const pacientesData = await getPacientes();
+          setPacientes(pacientesData);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Error cargando datos");
+      }
+    };
+
+    fetchData();
+  }, [usuario]);
+
+  // 🔥 HORAS DISPONIBLES
   useEffect(() => {
     if (medicoId && fecha) {
       cargarHoras();
@@ -34,32 +51,47 @@ const NuevaCita = () => {
     try {
       const data = await getHorasDisponibles(medicoId, fecha);
       setHoras(data);
-      setHoraSeleccionada(""); // reset selección
+      setHoraSeleccionada("");
     } catch (error) {
       console.error(error);
-      toast.error("Error cargando horarios"); // 🔥 añadido
+      toast.error("Error cargando horarios");
     }
   };
 
+  // 🔥 SUBMIT CORREGIDO
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // 👑 VALIDACIÓN ADMIN
+    if (usuario?.rol === "ADMIN" && !pacienteId) {
+      toast.error("Debes seleccionar un paciente");
+      return;
+    }
+
     const fechaCompleta = `${fecha}T${horaSeleccionada}`;
 
+    const payload = {
+      medicoId: Number(medicoId),
+      fecha: fechaCompleta,
+      pacienteId:
+        usuario?.rol === "ADMIN" && pacienteId
+          ? Number(pacienteId)
+          : null,
+    };
+
+    console.log("📦 PAYLOAD:", payload); // 🔥 DEBUG
+
     try {
-      await crearCita({
-        fecha: fechaCompleta,
-        medico: {
-          id: Number(medicoId),
-        },
-      });
+      await crearCita(payload);
 
-      toast.success("Cita creada correctamente"); // 🔥 añadido
-
+      toast.success("Cita creada correctamente");
       navigate("/citas");
 
     } catch (error) {
-      toast.error("Error al crear cita"); // 🔥 reemplaza alert
+      console.error(error);
+      toast.error(
+        error?.response?.data?.message || "Error al crear cita"
+      );
     }
   };
 
@@ -73,6 +105,23 @@ const NuevaCita = () => {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* 👑 PACIENTE SOLO ADMIN */}
+          {usuario?.rol === "ADMIN" && (
+            <select
+              className="w-full border p-2 rounded"
+              value={pacienteId}
+              onChange={(e) => setPacienteId(e.target.value)}
+            >
+              <option value="">Selecciona paciente</option>
+
+              {pacientes.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} {p.apellido}
+                </option>
+              ))}
+            </select>
+          )}
 
           {/* MÉDICO */}
           <select
@@ -120,7 +169,7 @@ const NuevaCita = () => {
 
           </div>
 
-          {/* MENSAJE SIN HORAS */}
+          {/* SIN HORAS */}
           {horas.length === 0 && medicoId && fecha && (
             <p className="text-red-500 text-sm">
               No hay horas disponibles para este día
@@ -130,7 +179,11 @@ const NuevaCita = () => {
           {/* BOTÓN */}
           <button
             type="submit"
-            disabled={!horaSeleccionada}
+            disabled={
+              !horaSeleccionada ||
+              !medicoId ||
+              (usuario?.rol === "ADMIN" && !pacienteId)
+            }
             className={`w-full py-2 rounded ${
               horaSeleccionada
                 ? "bg-blue-600 hover:bg-blue-700 text-white"

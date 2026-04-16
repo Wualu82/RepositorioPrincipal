@@ -38,7 +38,7 @@ const Clinica = () => {
             <h2 className="font-semibold text-lg mb-2">📞 Contacto</h2>
             <p className="text-gray-600">
               Tel: +34 600 123 456 <br />
-              Email: info@clinica.com
+              Email: info@clinicavitalia.com
             </p>
           </div>
 

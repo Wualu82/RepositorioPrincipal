@@ -8,6 +8,7 @@ import com.clinica.backend.repository.PacienteRepository;
 import com.clinica.backend.config.JwtUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,47 +40,56 @@ public class AuthController {
 
     // ================= LOGIN =================
     @PostMapping("/login")
-public Map<String, String> login(@RequestBody Map<String, String> request) {
+    public Map<String, String> login(@RequestBody Map<String, String> request) {
 
-    String email = request.get("email");
-    String password = request.get("password");
+        String email = request.get("email");
+        String password = request.get("password");
 
-    // 🔍 DEBUG
-    System.out.println("🔥 LOGIN INTENTO: " + email);
-    System.out.println("🔥 PASSWORD INPUT: " + password);
+        System.out.println("🔥 LOGIN INTENTO: " + email);
 
-    // 🔐 AUTENTICACIÓN
-    authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(email, password)
-    );
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password)
+        );
 
-    System.out.println("✅ LOGIN OK");
+        System.out.println("✅ LOGIN OK");
 
-    // 🔎 BUSCAR USUARIO
-    Usuario usuario = usuarioRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    // 🔑 GENERAR TOKEN
-    String token = jwtUtil.generateToken(email);
+        String token = jwtUtil.generateToken(email);
 
-    // 📦 RESPUESTA
-    Map<String, String> response = new HashMap<>();
-    response.put("token", token);
-    response.put("rol", usuario.getRol());
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        response.put("rol", usuario.getRol());
 
-    return response;
-}
+        // 🔥 SOLO SI ES PACIENTE
+        if (usuario.getRol().equals("PACIENTE")) {
+            Paciente paciente = pacienteRepository.findByUsuario(usuario)
+                    .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+
+            response.put("nombre", paciente.getNombre());
+            response.put("apellido", paciente.getApellido());
+        }
+
+        // 🔥 SI ES ADMIN (NO TIENE PACIENTE)
+        if (usuario.getRol().equals("ADMIN")) {
+            response.put("nombre", "Admin");
+            response.put("apellido", "");
+        }
+
+        return response;
+    }
 
     // ================= REGISTER =================
     @PostMapping("/register")
-    public Map<String, String> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
 
-        // comprobar si ya existe
         if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("El email ya está registrado");
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("email", "El email ya está registrado"));
         }
 
-        // crear usuario
         Usuario usuario = new Usuario();
         usuario.setEmail(request.getEmail());
         usuario.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -88,7 +98,6 @@ public Map<String, String> login(@RequestBody Map<String, String> request) {
 
         usuarioRepository.save(usuario);
 
-        // crear paciente asociado
         Paciente paciente = new Paciente();
         paciente.setNombre(request.getNombre());
         paciente.setApellido(request.getApellido());
@@ -99,18 +108,16 @@ public Map<String, String> login(@RequestBody Map<String, String> request) {
 
         pacienteRepository.save(paciente);
 
-        Map<String, String> response = new HashMap<>();
-        response.put("mensaje", "Usuario registrado correctamente");
-
-        return response;
+        return ResponseEntity.ok(Map.of("mensaje", "Usuario registrado correctamente"));
     }
+
     @PostMapping("/hash")
-        public Map<String, String> hashPassword(@RequestBody Map<String, String> request) {
+    public Map<String, String> hashPassword(@RequestBody Map<String, String> request) {
 
         String rawPassword = request.get("password");
 
         String hashed = passwordEncoder.encode(rawPassword);
 
         return Map.of("hash", hashed);
-    }    
+    }
 }

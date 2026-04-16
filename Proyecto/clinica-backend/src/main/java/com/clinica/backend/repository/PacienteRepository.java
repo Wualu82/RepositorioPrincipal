@@ -10,6 +10,6 @@ import java.util.Optional;
 @Repository
 public interface PacienteRepository extends JpaRepository<Paciente, Long> {
 
-    // 🔥 NUEVO
     Optional<Paciente> findByUsuario(Usuario usuario);
+
 }

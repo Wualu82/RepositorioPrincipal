@@ -2,117 +2,39 @@ import { useParams, useNavigate } from "react-router-dom";
 import PublicLayout from "../components/PublicLayout";
 import { useAuth } from "../context/AuthContext";
 import { goToCitas } from "../utils/navigation";
-
-// 🔥 MISMO ARRAY
-const medicos = [
-  {
-    id: 1,
-    nombre: "Juan Pérez",
-    especialidad: "Cardiología",
-    imagen: "https://randomuser.me/api/portraits/men/32.jpg",
-    bio: "Especialista en cardiología con más de 15 años de experiencia en el tratamiento de enfermedades cardiovasculares.",
-    experiencia: "Hospital Universitario - 10 años | Clínica privada - 5 años",
-  },
-  {
-    id: 2,
-    nombre: "Marta López",
-    especialidad: "Dermatología",
-    imagen: "https://randomuser.me/api/portraits/women/44.jpg",
-    bio: "Dermatóloga experta en enfermedades cutáneas y tratamientos estéticos avanzados.",
-    experiencia: "Centro Dermatológico - 8 años",
-  },
-  {
-    id: 3,
-    nombre: "Carlos Gómez",
-    especialidad: "Traumatología",
-    imagen: "https://randomuser.me/api/portraits/men/65.jpg",
-    bio: "Especialista en lesiones deportivas y cirugía ortopédica.",
-    experiencia: "Clínica deportiva - 12 años",
-  },
-  {
-    id: 4,
-    nombre: "Laura Sánchez",
-    especialidad: "Pediatría",
-    imagen: "https://randomuser.me/api/portraits/women/68.jpg",
-    bio: "Pediatra especializada en desarrollo infantil y vacunación.",
-    experiencia: "Hospital infantil - 9 años",
-  },
-  {
-    id: 5,
-    nombre: "Antonio Ruiz",
-    especialidad: "Neurología",
-    imagen: "https://randomuser.me/api/portraits/men/12.jpg",
-    bio: "Tratamiento de trastornos neurológicos y enfermedades degenerativas.",
-    experiencia: "Unidad neurológica - 11 años",
-  },
-  {
-    id: 6,
-    nombre: "Elena Torres",
-    especialidad: "Ginecología",
-    imagen: "https://randomuser.me/api/portraits/women/25.jpg",
-    bio: "Especialista en salud femenina y control del embarazo.",
-    experiencia: "Clínica ginecológica - 10 años",
-  },
-  {
-    id: 7,
-    nombre: "David Navarro",
-    especialidad: "Urología",
-    imagen: "https://randomuser.me/api/portraits/men/77.jpg",
-    bio: "Especialista en patologías del sistema urinario.",
-    experiencia: "Hospital general - 13 años",
-  },
-  {
-    id: 8,
-    nombre: "Ana Martín",
-    especialidad: "Endocrinología",
-    imagen: "https://randomuser.me/api/portraits/women/15.jpg",
-    bio: "Tratamiento de enfermedades hormonales como diabetes y tiroides.",
-    experiencia: "Unidad endocrina - 9 años",
-  },
-  {
-    id: 9,
-    nombre: "Sergio Ramírez",
-    especialidad: "Otorrinolaringología",
-    imagen: "https://randomuser.me/api/portraits/men/45.jpg",
-    bio: "Tratamiento de patologías de oído, nariz y garganta.",
-    experiencia: "Centro ORL - 10 años",
-  },
-  {
-    id: 10,
-    nombre: "Lucía Fernández",
-    especialidad: "Oftalmología",
-    imagen: "https://randomuser.me/api/portraits/women/52.jpg",
-    bio: "Especialista en salud visual y enfermedades oculares.",
-    experiencia: "Clínica oftalmológica - 8 años",
-  },
-  {
-    id: 11,
-    nombre: "Javier Morales",
-    especialidad: "Medicina general",
-    imagen: "https://randomuser.me/api/portraits/men/29.jpg",
-    bio: "Atención primaria y diagnóstico integral de pacientes.",
-    experiencia: "Centro de salud - 14 años",
-  },
-  {
-    id: 12,
-    nombre: "Carmen Díaz",
-    especialidad: "Enfermería",
-    imagen: "https://randomuser.me/api/portraits/women/33.jpg",
-    bio: "Cuidados sanitarios, seguimiento y atención al paciente.",
-    experiencia: "Hospital clínico - 12 años",
-  },
-];
+import { useEffect, useState } from "react";
+import { getMedicoById } from "../api/medicos";
+import { medicosBio } from "../data/medicosBio";
 
 const MedicoDetalle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth(); // 🔥 AÑADIDO
+  const { token } = useAuth();
 
-  const medico = medicos.find((m) => m.id === Number(id));
+  const [medico, setMedico] = useState(null);
+
+  useEffect(() => {
+    const fetchMedico = async () => {
+      try {
+        const data = await getMedicoById(id);
+        setMedico(data);
+      } catch (error) {
+        console.error("Error cargando médico:", error);
+      }
+    };
+
+    fetchMedico();
+  }, [id]);
 
   if (!medico) {
-    return <div>Médico no encontrado</div>;
+    return (
+      <PublicLayout>
+        <p className="text-center mt-10">Cargando médico...</p>
+      </PublicLayout>
+    );
   }
+
+  const bio = medicosBio[medico.id];
 
   return (
     <PublicLayout>
@@ -123,48 +45,36 @@ const MedicoDetalle = () => {
         <div className="flex flex-col md:flex-row gap-6 items-center">
 
           <img
-            src={medico.imagen}
+            src={`https://ui-avatars.com/api/?name=${medico.nombre}+${medico.apellido}&background=0D8ABC&color=fff`}
             alt={medico.nombre}
-            className="w-48 h-48 object-cover rounded-xl"
+            className="w-full md:w-64 h-48 object-cover rounded-xl"
           />
 
           <div>
 
             <h1 className="text-2xl font-bold">
-              Dr. {medico.nombre}
+              Dr. {medico.nombre} {medico.apellido}
             </h1>
 
-            <p className="text-blue-600 font-semibold mb-2">
-              {medico.especialidad}
+            <p className="text-blue-600 font-semibold mb-3">
+              {medico.especialidad?.nombre || medico.especialidad}
             </p>
 
-            <p className="text-gray-600">
-              {medico.bio}
+            {/* 🔥 BIO COMPLETA */}
+            <p className="text-gray-600 leading-relaxed">
+              {bio || "Información no disponible"}
             </p>
 
           </div>
 
         </div>
 
-        {/* EXPERIENCIA */}
-        <div className="mt-6">
-
-          <h2 className="text-xl font-semibold mb-2">
-            Experiencia profesional
-          </h2>
-
-          <p className="text-gray-600">
-            {medico.experiencia}
-          </p>
-
-        </div>
-
-        {/* 🔥 BOTÓN CORREGIDO */}
-        <div className="mt-6">
+        {/* BOTÓN */}
+        <div className="mt-6 text-center">
 
           <button
             onClick={() => goToCitas(navigate, token)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Pedir cita
           </button>

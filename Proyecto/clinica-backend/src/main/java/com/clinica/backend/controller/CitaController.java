@@ -1,5 +1,6 @@
 package com.clinica.backend.controller;
 
+import com.clinica.backend.dto.CitaRequest;
 import com.clinica.backend.model.Cita;
 import com.clinica.backend.model.EstadoCita;
 import com.clinica.backend.service.CitaService;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/citas")
+@CrossOrigin // 🔥 IMPORTANTE para frontend
 public class CitaController {
 
     private final CitaService citaService;
@@ -37,10 +39,10 @@ public class CitaController {
         return citaService.obtenerCitasDelUsuarioLogueado();
     }
 
-    // 👤 CREAR CITA
+    // 🔥 CREAR CITA (ADMIN + PACIENTE)
     @PostMapping
-    public Cita crear(@RequestBody Cita cita) {
-        return citaService.crearCitaParaUsuarioLogueado(cita);
+    public Cita crear(@RequestBody CitaRequest request) {
+        return citaService.crearCita(request);
     }
 
     // 🔥 CANCELAR
@@ -55,7 +57,7 @@ public class CitaController {
         return citaService.confirmarCita(id);
     }
 
-    // 🔥 👉 ESTE ES EL QUE TE FALTABA 👈
+    // 🔥 HORAS DISPONIBLES
     @GetMapping("/disponibles")
     public List<LocalTime> obtenerHorasDisponibles(
             @RequestParam Long medicoId,

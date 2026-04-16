@@ -1,5 +1,6 @@
 package com.clinica.backend.service;
 
+import com.clinica.backend.dto.CitaRequest;
 import com.clinica.backend.model.*;
 import com.clinica.backend.repository.*;
 
@@ -38,7 +39,7 @@ public class CitaService {
         return citaRepository.findAll();
     }
 
-    // 👤 MIS CITAS (FIX ADMIN)
+    // 👤 MIS CITAS (ADMIN ve todas)
     public List<Cita> obtenerCitasDelUsuarioLogueado() {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -46,48 +47,64 @@ public class CitaService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // 🔥 ADMIN VE TODAS
         if (usuario.getRol().equals("ADMIN")) {
             return citaRepository.findAll();
         }
 
-        // 👤 PACIENTE VE SOLO LAS SUYAS
         Paciente paciente = pacienteRepository.findByUsuario(usuario)
                 .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
 
         return citaRepository.findByPaciente_Id(paciente.getId());
     }
 
-    // 👤 CREAR CITA
-    public Cita crearCitaParaUsuarioLogueado(Cita cita) {
+    // 🔥 CREAR CITA (ADMIN + PACIENTE)
+    public Cita crearCita(CitaRequest request) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Paciente paciente = pacienteRepository.findByUsuario(usuario)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+        // 🔥 VALIDACIÓN CLAVE (evita tu error anterior)
+        if (request.getMedicoId() == null) {
+            throw new RuntimeException("Debe proporcionar un medicoId");
+        }
 
-        cita.setPaciente(paciente);
+        if (request.getFecha() == null) {
+            throw new RuntimeException("Debe proporcionar una fecha");
+        }
+
+        Paciente paciente;
+
+        // 👑 ADMIN → usa pacienteId
+        if (usuario.getRol().equals("ADMIN")) {
+
+            if (request.getPacienteId() == null) {
+                throw new RuntimeException("Debe proporcionar un pacienteId");
+            }
+
+            paciente = pacienteRepository.findById(request.getPacienteId())
+                    .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+
+        } else {
+            // 👤 PACIENTE → usa su propio usuario
+            paciente = pacienteRepository.findByUsuario(usuario)
+                    .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+        }
+
+        // 🔥 MÉDICO
+        Medico medico = medicoRepository.findById(request.getMedicoId())
+                .orElseThrow(() -> new RuntimeException("Médico no encontrado"));
+
+        LocalDateTime fecha = request.getFecha();
 
         // ❌ FECHAS PASADAS
-        if (cita.getFecha().isBefore(LocalDateTime.now())) {
+        if (fecha.isBefore(LocalDateTime.now())) {
             throw new RuntimeException("No puedes crear citas en el pasado");
         }
 
-        // ❌ MÉDICO
-        if (cita.getMedico() == null || cita.getMedico().getId() == null) {
-            throw new RuntimeException("Debe proporcionar un medicoId válido");
-        }
-
-        Medico medico = medicoRepository.findById(cita.getMedico().getId())
-                .orElseThrow(() -> new RuntimeException("Médico no encontrado"));
-
-        cita.setMedico(medico);
-
-        // 🔥 DÍA CORRECTO (EN INGLÉS → COINCIDE CON BD)
-        DiaSemana diaEnum = DiaSemana.valueOf(cita.getFecha().getDayOfWeek().name());
+        // 🔥 VALIDAR DÍA
+        DiaSemana diaEnum = DiaSemana.valueOf(fecha.getDayOfWeek().name());
 
         List<HorarioMedico> horarios = horarioMedicoRepository
                 .findByMedico_IdAndDiaSemana(medico.getId(), diaEnum);
@@ -96,7 +113,7 @@ public class CitaService {
             throw new RuntimeException("El médico no trabaja ese día");
         }
 
-        LocalTime hora = cita.getFecha().toLocalTime();
+        LocalTime hora = fecha.toLocalTime();
 
         boolean dentroHorario = horarios.stream().anyMatch(h ->
                 (hora.equals(h.getHoraInicio()) || hora.isAfter(h.getHoraInicio()))
@@ -107,13 +124,19 @@ public class CitaService {
             throw new RuntimeException("Hora fuera del horario del médico");
         }
 
-        boolean existe = citaRepository.existsByMedico_IdAndFecha(medico.getId(), cita.getFecha());
+        // ❌ DOBLE RESERVA
+        boolean existe = citaRepository.existsByMedico_IdAndFecha(medico.getId(), fecha);
 
         if (existe) {
             throw new RuntimeException("Ya existe una cita en esa fecha");
         }
 
-        cita.setEstado(EstadoCita.PENDIENTE);
+        // 🔥 CREAR
+        Cita cita = new Cita();
+        cita.setPaciente(paciente);
+        cita.setMedico(medico);
+        cita.setFecha(fecha);
+        cita.setEstado(EstadoCita.CONFIRMADA);
 
         return citaRepository.save(cita);
     }
@@ -123,7 +146,6 @@ public class CitaService {
 
         LocalDate fecha = LocalDate.parse(fechaStr);
 
-        // 🔥 CLAVE → MISMO FORMATO QUE BD (MONDAY, etc)
         DiaSemana diaEnum = DiaSemana.valueOf(fecha.getDayOfWeek().name());
 
         List<HorarioMedico> horarios = horarioMedicoRepository
@@ -189,7 +211,7 @@ public class CitaService {
         return citaRepository.save(cita);
     }
 
-    // 🔥 CONFIRMAR
+    // 🔥 CONFIRMAR (ADMIN)
     public Cita confirmarCita(Long citaId) {
 
         Cita cita = citaRepository.findById(citaId)

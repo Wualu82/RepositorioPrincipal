@@ -18,18 +18,16 @@ const Login = () => {
     try {
       const data = await login(email, password);
 
-      // 🔐 Guardar token en contexto + localStorage
-      loginUser(data.token);
+      // 🔥 IMPORTANTE: pasar TODO el objeto
+      loginUser(data);
 
-      // 🔥 Guardar rol
+      // (opcional) guardar rol si lo usas en otras partes
       if (data.rol) {
         localStorage.setItem("rol", data.rol);
       }
 
-      // 🔥 TOAST
       toast.success("Login correcto");
 
-      // 🔥 Redirección con pequeño delay
       setTimeout(() => {
         navigate("/dashboard");
       }, 800);
@@ -77,6 +75,16 @@ const Login = () => {
             >
               Entrar
             </button>
+
+            <p className="mt-4 text-sm text-center">
+              ¿Aún no eres usuario?{" "}
+              <span
+                className="text-blue-600 cursor-pointer hover:underline"
+                onClick={() => navigate("/register")}
+              >
+                Regístrate aquí
+              </span>
+            </p>
 
           </form>
 

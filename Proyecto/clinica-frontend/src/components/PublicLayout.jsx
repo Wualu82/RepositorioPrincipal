@@ -1,12 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import Footer from "../components/Footer"; // 🔥 IMPORTANTE
 
 const PublicLayout = ({ children }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const { token, logoutUser } = useAuth();
+  const { token, usuario, logoutUser } = useAuth();
 
   const handleLogout = () => {
     logoutUser();
@@ -38,13 +39,12 @@ const PublicLayout = ({ children }) => {
         {/* 💻 MENU DESKTOP */}
         <div className="hidden md:flex gap-6 items-center text-sm">
 
-          <Link to="/" className="hover:text-primary">Inicio</Link>
-          <Link to="/servicios" className="hover:text-primary">Servicios</Link>
-          <Link to="/equipo" className="hover:text-primary">Equipo</Link>
-          <Link to="/clinica" className="hover:text-primary">La clínica</Link>
-          <Link to="/trabaja" className="hover:text-primary">Trabaja</Link>
+          <Link to="/">Inicio</Link>
+          <Link to="/servicios">Servicios</Link>
+          <Link to="/equipo">Equipo</Link>
+          <Link to="/clinica">La clínica</Link>
+          <Link to="/trabaja">Trabaja</Link>
 
-          {/* 🔥 CONTROL DE LOGIN */}
           {!token ? (
             <button
               onClick={() => navigate("/login")}
@@ -54,8 +54,17 @@ const PublicLayout = ({ children }) => {
             </button>
           ) : (
             <>
-              <button onClick={() => navigate("/dashboard")}>
-                Dashboard
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700 transition"
+              >
+                <div className="w-8 h-8 flex items-center justify-center bg-white text-blue-600 rounded-full font-bold">
+                  {usuario?.nombre?.[0]}{usuario?.apellido?.[0]}
+                </div>
+
+                <span>
+                  {usuario?.nombre}
+                </span>
               </button>
 
               <button
@@ -67,7 +76,6 @@ const PublicLayout = ({ children }) => {
             </>
           )}
 
-          {/* 🔥 BOTÓN INTELIGENTE */}
           <button
             onClick={() => navigate(token ? "/citas/nueva" : "/login")}
             className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary"
@@ -94,8 +102,13 @@ const PublicLayout = ({ children }) => {
             </button>
           ) : (
             <>
-              <button onClick={() => navigate("/dashboard")}>
-                Dashboard
+              <button
+                onClick={() => {
+                  navigate("/dashboard");
+                  setOpen(false);
+                }}
+              >
+                {usuario?.nombre} {usuario?.apellido}
               </button>
 
               <button onClick={handleLogout}>
@@ -104,7 +117,6 @@ const PublicLayout = ({ children }) => {
             </>
           )}
 
-          {/* 🔥 BOTÓN INTELIGENTE MOBILE */}
           <button
             onClick={() => navigate(token ? "/citas/nueva" : "/login")}
             className="bg-primary text-white px-4 py-2 rounded-lg"
@@ -120,43 +132,8 @@ const PublicLayout = ({ children }) => {
         {children}
       </main>
 
-      {/* 🔻 FOOTER */}
-      <footer className="bg-white border-t mt-10 text-sm">
-
-        <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          <div>
-            <h2 className="text-lg font-semibold mb-2">
-              🩺 Clínica Vitalia
-            </h2>
-            <p className="text-gray-500">
-              Cuidamos de tu salud con profesionales de confianza.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-2">Enlaces</h3>
-            <ul className="space-y-1 text-gray-600">
-              <li><Link to="/">Inicio</Link></li>
-              <li><Link to="/servicios">Servicios</Link></li>
-              <li><Link to="/equipo">Equipo</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-2">Contacto</h3>
-            <p>📍 Av. de Andalucía 45, Málaga</p>
-            <p>📞 951 123 456</p>
-            <p>✉️ info@vitalia.com</p>
-          </div>
-
-        </div>
-
-        <div className="text-center text-gray-400 text-xs pb-4">
-          © 2026 Clínica Vitalia. Todos los derechos reservados.
-        </div>
-
-      </footer>
+      {/* 🔻 FOOTER REAL */}
+      <Footer />
 
     </div>
   );
